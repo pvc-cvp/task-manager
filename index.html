@@ -351,6 +351,8 @@
             z-index: 1000;
             animation: slideInRight 0.3s ease;
             display: none;
+            max-width: 350px;
+            word-wrap: break-word;
         }
 
         .notification.show {
@@ -412,6 +414,20 @@
             color: white;
         }
 
+        .auth-error {
+            background: #fff5f5;
+            color: #c53030;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-size: 0.9em;
+            display: none;
+        }
+
+        .auth-error.show {
+            display: block;
+        }
+
         .loading {
             text-align: center;
             padding: 20px;
@@ -429,58 +445,28 @@
         }
 
         @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
         @keyframes zoomIn {
-            from {
-                opacity: 0;
-                transform: scale(0.8);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
         }
 
         @keyframes spin {
@@ -489,21 +475,10 @@
         }
 
         @media (max-width: 768px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            .stats {
-                grid-template-columns: 1fr;
-            }
-
-            .header h1 {
-                font-size: 1.8em;
-            }
+            .main-content { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+            .stats { grid-template-columns: 1fr; }
+            .header h1 { font-size: 1.8em; }
         }
     </style>
 </head>
@@ -513,9 +488,10 @@
         <div class="auth-content">
             <h2>🔐 欢迎使用</h2>
             <div class="auth-tabs">
-                <button class="auth-tab active" onclick="switchTab('login')">登录</button>
-                <button class="auth-tab" onclick="switchTab('register')">注册</button>
+                <button class="auth-tab active" id="loginTab" onclick="switchTab('login')">登录</button>
+                <button class="auth-tab" id="registerTab" onclick="switchTab('register')">注册</button>
             </div>
+            <div class="auth-error" id="authError"></div>
             <form id="loginForm">
                 <div class="form-group">
                     <label>邮箱</label>
@@ -525,7 +501,7 @@
                     <label>密码</label>
                     <input type="password" id="loginPassword" placeholder="至少6位" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">登录</button>
+                <button type="submit" class="btn btn-primary" id="loginBtn" style="width: 100%;">登录</button>
             </form>
             <form id="registerForm" style="display: none;">
                 <div class="form-group">
@@ -540,7 +516,7 @@
                     <label>密码</label>
                     <input type="password" id="registerPassword" placeholder="至少6位" required>
                 </div>
-                <button type="submit" class="btn btn-primary" style="width: 100%;">注册</button>
+                <button type="submit" class="btn btn-primary" id="registerBtn" style="width: 100%;">注册</button>
             </form>
         </div>
     </div>
@@ -630,84 +606,125 @@
 
     <div class="notification" id="notification"></div>
 
-    <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { getDatabase, ref, push, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-        // ⚠️ 重要：这是演示配置，实际使用时需要替换为你自己的 Firebase 配置
         const firebaseConfig = {
-    apiKey: "AIzaSyCpNJdxzVNGAfSOEcqgeLc97Tmi8FNnYxs",
-    authDomain: "task-manager-90990.firebaseapp.com",
-    databaseURL: "https://task-manager-90990-default-rtdb.asia-southeast1.firebasedatabase.app",
-    projectId: "task-manager-90990",
-    storageBucket: "task-manager-90990.firebasestorage.app",
-    messagingSenderId: "910150616418",
-    appId: "1:910150616418:web:3f1e02e98dc73633a1983b"
-};
+            apiKey: "AIzaSyCpNJdxzVNGAfSOEcqgeLc97Tmi8FNnYxs",
+            authDomain: "task-manager-90990.firebaseapp.com",
+            databaseURL: "https://task-manager-90990-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "task-manager-90990",
+            storageBucket: "task-manager-90990.firebasestorage.app",
+            messagingSenderId: "910150616418",
+            appId: "1:910150616418:web:3f1e02e98dc73633a1983b"
+        };
 
-        let app, auth, database, currentUser;
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const database = getDatabase(app);
+        let currentUser = null;
+        let tasks = [];
+        let tasksRef = null;
+        let taskFormInitialized = false; // 防止重复绑定
 
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            database = getDatabase(app);
-        } catch (error) {
-            console.error("Firebase 初始化失败:", error);
-            alert("⚠️ 数据库配置未完成！\n\n请按照以下步骤操作：\n1. 访问 https://console.firebase.google.com\n2. 创建新项目\n3. 启用 Email/Password 认证\n4. 创建 Realtime Database\n5. 将配置信息替换到代码中\n\n当前为演示模式，功能受限。");
+        // ========== 显示错误信息 ==========
+        function showAuthError(message) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.textContent = message;
+            errorDiv.classList.add('show');
+            setTimeout(() => errorDiv.classList.remove('show'), 5000);
         }
 
-        // 切换登录/注册标签
+        // ========== 错误码翻译（修复新版 Firebase） ==========
+        function getErrorMessage(code) {
+            const messages = {
+                'auth/email-already-in-use': '该邮箱已被注册',
+                'auth/invalid-email': '邮箱格式不正确',
+                'auth/weak-password': '密码强度太弱（至少6位）',
+                'auth/user-not-found': '用户不存在',
+                'auth/wrong-password': '密码错误',
+                'auth/invalid-credential': '邮箱或密码错误，请检查后重试',
+                'auth/invalid-login-credentials': '邮箱或密码错误，请检查后重试',
+                'auth/too-many-requests': '登录尝试过多，请稍后再试',
+                'auth/network-request-failed': '网络连接失败，请检查网络',
+                'auth/user-disabled': '该账号已被禁用',
+                'auth/operation-not-allowed': '登录方式未启用，请联系管理员'
+            };
+            return messages[code] || '操作失败（错误码：' + code + '）';
+        }
+
+        // ========== 切换登录/注册 ==========
         window.switchTab = function(tab) {
             const loginForm = document.getElementById('loginForm');
             const registerForm = document.getElementById('registerForm');
-            const tabs = document.querySelectorAll('.auth-tab');
+            const loginTab = document.getElementById('loginTab');
+            const registerTab = document.getElementById('registerTab');
+            const errorDiv = document.getElementById('authError');
             
-            tabs.forEach(t => t.classList.remove('active'));
+            errorDiv.classList.remove('show');
             
             if (tab === 'login') {
                 loginForm.style.display = 'block';
                 registerForm.style.display = 'none';
-                tabs[0].classList.add('active');
+                loginTab.classList.add('active');
+                registerTab.classList.remove('active');
             } else {
                 loginForm.style.display = 'none';
                 registerForm.style.display = 'block';
-                tabs[1].classList.add('active');
+                loginTab.classList.remove('active');
+                registerTab.classList.add('active');
             }
         };
 
-        // 注册
+        // ========== 注册 ==========
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('registerName').value;
-            const email = document.getElementById('registerEmail').value;
+            const name = document.getElementById('registerName').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
             const password = document.getElementById('registerPassword').value;
+            const btn = document.getElementById('registerBtn');
+
+            btn.textContent = '注册中...';
+            btn.disabled = true;
 
             try {
                 const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                 await updateProfile(userCredential.user, { displayName: name });
                 showNotification('✅ 注册成功！', 'success');
             } catch (error) {
-                showNotification('❌ ' + getErrorMessage(error.code), 'error');
+                console.error('注册错误:', error.code, error.message);
+                showAuthError(getErrorMessage(error.code));
+            } finally {
+                btn.textContent = '注册';
+                btn.disabled = false;
             }
         });
 
-        // 登录
+        // ========== 登录 ==========
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
+            const email = document.getElementById('loginEmail').value.trim();
             const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+
+            btn.textContent = '登录中...';
+            btn.disabled = true;
 
             try {
                 await signInWithEmailAndPassword(auth, email, password);
                 showNotification('✅ 登录成功！', 'success');
             } catch (error) {
-                showNotification('❌ ' + getErrorMessage(error.code), 'error');
+                console.error('登录错误:', error.code, error.message);
+                showAuthError(getErrorMessage(error.code));
+            } finally {
+                btn.textContent = '登录';
+                btn.disabled = false;
             }
         });
 
-        // 退出登录
+        // ========== 退出 ==========
         window.logout = async function() {
             if (confirm('确定要退出登录吗？')) {
                 try {
@@ -719,7 +736,7 @@
             }
         };
 
-        // 监听认证状态
+        // ========== 监听登录状态 ==========
         onAuthStateChanged(auth, (user) => {
             if (user) {
                 currentUser = user;
@@ -734,14 +751,10 @@
             }
         });
 
-        // 任务管理器
-        let tasks = [];
-        let tasksRef;
-
+        // ========== 初始化任务管理器（防止重复绑定） ==========
         function initTaskManager() {
             tasksRef = ref(database, 'tasks/' + currentUser.uid);
-            
-            // 监听任务变化
+
             onValue(tasksRef, (snapshot) => {
                 tasks = [];
                 snapshot.forEach((childSnapshot) => {
@@ -751,23 +764,31 @@
                     });
                 });
                 renderTasks();
+            }, (error) => {
+                console.error('数据库读取错误:', error);
+                showNotification('❌ 数据加载失败，请检查数据库规则', 'error');
             });
 
-            // 添加任务表单
-            document.getElementById('taskForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                await addTask();
-            });
+            // 只绑定一次
+            if (!taskFormInitialized) {
+                document.getElementById('taskForm').addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    await addTask();
+                });
+                taskFormInitialized = true;
+            }
 
-            // 定时检查提醒
             setInterval(checkReminders, 60000);
         }
 
+        // ========== 添加任务 ==========
         async function addTask() {
-            const title = document.getElementById('taskTitle').value;
-            const description = document.getElementById('taskDescription').value;
+            const title = document.getElementById('taskTitle').value.trim();
+            const description = document.getElementById('taskDescription').value.trim();
             const dateTime = document.getElementById('taskDateTime').value;
             const priority = document.getElementById('taskPriority').value;
+
+            if (!title || !dateTime) return;
 
             const task = {
                 title,
@@ -786,10 +807,12 @@
                 showNotification('✅ 任务添加成功！', 'success');
                 document.getElementById('taskForm').reset();
             } catch (error) {
+                console.error('添加任务错误:', error);
                 showNotification('❌ 添加失败: ' + error.message, 'error');
             }
         }
 
+        // ========== 完成/恢复任务 ==========
         window.toggleComplete = async function(taskId) {
             const task = tasks.find(t => t.id === taskId);
             if (task) {
@@ -804,6 +827,7 @@
             }
         };
 
+        // ========== 删除任务 ==========
         window.deleteTask = async function(taskId) {
             if (confirm('确定要删除这个任务吗？')) {
                 try {
@@ -815,6 +839,7 @@
             }
         };
 
+        // ========== 渲染任务列表 ==========
         function renderTasks() {
             const pending = tasks.filter(t => !t.completed).sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
             const completed = tasks.filter(t => t.completed).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
@@ -822,29 +847,14 @@
             const pendingList = document.getElementById('pendingTaskList');
             const completedList = document.getElementById('completedTaskList');
 
-            if (pending.length === 0) {
-                pendingList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📝</div>
-                        <p>暂无待办任务</p>
-                    </div>
-                `;
-            } else {
-                pendingList.innerHTML = pending.map(task => renderTask(task)).join('');
-            }
+            pendingList.innerHTML = pending.length === 0
+                ? '<div class="empty-state"><div class="empty-state-icon">📝</div><p>暂无待办任务</p></div>'
+                : pending.map(task => renderTask(task)).join('');
 
-            if (completed.length === 0) {
-                completedList.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">🎉</div>
-                        <p>暂无已完成任务</p>
-                    </div>
-                `;
-            } else {
-                completedList.innerHTML = completed.map(task => renderTask(task)).join('');
-            }
+            completedList.innerHTML = completed.length === 0
+                ? '<div class="empty-state"><div class="empty-state-icon">🎉</div><p>暂无已完成任务</p></div>'
+                : completed.map(task => renderTask(task)).join('');
 
-            // 更新统计
             document.getElementById('totalTasks').textContent = tasks.length;
             document.getElementById('pendingTasks').textContent = pending.length;
             document.getElementById('completedTasks').textContent = completed.length;
@@ -853,27 +863,19 @@
         function renderTask(task) {
             const timeRemaining = getTimeRemaining(task.dateTime);
             const isOverdue = timeRemaining === '已过期' && !task.completed;
-            const priorityText = {
-                high: '高优先级',
-                medium: '中优先级',
-                low: '低优先级'
-            };
+            const priorityText = { high: '高优先级', medium: '中优先级', low: '低优先级' };
 
             return `
                 <div class="task-item ${task.priority}-priority ${task.completed ? 'completed' : ''}">
                     <div class="task-header">
                         <div class="task-title">${task.title}</div>
                         <span class="task-creator">${task.createdBy}</span>
-                        <span class="task-priority priority-${task.priority}">
-                            ${priorityText[task.priority]}
-                        </span>
+                        <span class="task-priority priority-${task.priority}">${priorityText[task.priority]}</span>
                     </div>
                     ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
                     <div class="task-meta">
                         <span>⏰ ${formatDateTime(task.dateTime)}</span>
-                        <span style="${isOverdue ? 'color: #f5576c; font-weight: 600;' : ''}">
-                            ${timeRemaining}
-                        </span>
+                        <span style="${isOverdue ? 'color: #f5576c; font-weight: 600;' : ''}">${timeRemaining}</span>
                     </div>
                     <div class="task-actions">
                         <button class="btn btn-complete" onclick="toggleComplete('${task.id}')">
@@ -889,25 +891,15 @@
 
         function formatDateTime(dateString) {
             const d = new Date(dateString);
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            const hours = String(d.getHours()).padStart(2, '0');
-            const minutes = String(d.getMinutes()).padStart(2, '0');
-            return `${year}-${month}-${day} ${hours}:${minutes}`;
+            return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
         }
 
         function getTimeRemaining(dateString) {
-            const now = new Date();
-            const target = new Date(dateString);
-            const diff = target - now;
-
+            const diff = new Date(dateString) - new Date();
             if (diff < 0) return '已过期';
-
-            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
+            const days = Math.floor(diff / (1000*60*60*24));
+            const hours = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+            const minutes = Math.floor((diff % (1000*60*60)) / (1000*60));
             if (days > 0) return `剩余 ${days} 天 ${hours} 小时`;
             if (hours > 0) return `剩余 ${hours} 小时 ${minutes} 分钟`;
             return `剩余 ${minutes} 分钟`;
@@ -915,16 +907,11 @@
 
         function checkReminders() {
             if (!currentUser) return;
-
             const now = new Date();
             tasks.forEach(task => {
                 if (task.completed) return;
-
-                const taskTime = new Date(task.dateTime);
-                const diff = taskTime - now;
-
-                // 提前15分钟提醒
-                if (diff > 0 && diff <= 15 * 60 * 1000 && !task.reminded) {
+                const diff = new Date(task.dateTime) - now;
+                if (diff > 0 && diff <= 15*60*1000 && !task.reminded) {
                     showNotification(`⏰ 提醒：${task.title} 将在15分钟后到期！`, 'warning');
                     if ('Notification' in window && Notification.permission === 'granted') {
                         new Notification('任务提醒', { body: `${task.title} 将在15分钟后到期！` });
@@ -937,25 +924,9 @@
             const notification = document.getElementById('notification');
             notification.textContent = message;
             notification.className = 'notification show';
-
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+            setTimeout(() => notification.classList.remove('show'), 3000);
         }
 
-        function getErrorMessage(code) {
-            const messages = {
-                'auth/email-already-in-use': '该邮箱已被注册',
-                'auth/invalid-email': '邮箱格式不正确',
-                'auth/weak-password': '密码强度太弱（至少6位）',
-                'auth/user-not-found': '用户不存在',
-                'auth/wrong-password': '密码错误',
-                'auth/too-many-requests': '操作过于频繁，请稍后再试'
-            };
-            return messages[code] || '操作失败，请重试';
-        }
-
-        // 请求通知权限
         if ('Notification' in window && Notification.permission === 'default') {
             Notification.requestPermission();
         }
