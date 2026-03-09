@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>重要事务管理系统 - 云端版</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            animation: fadeInDown 0.6s ease;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 20px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .card-header h2 {
+            color: #4a5568;
+            font-size: 1.5em;
+        }
+
+        .add-task-section {
+            grid-column: 1 / -1;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #4a5568;
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(240, 147, 251, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-danger:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-complete {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 8px 15px;
+            font-size: 0.9em;
+        }
+
+        .btn-complete:hover {
+            transform: scale(1.05);
+        }
+
+        .task-list {
+            max-height: 500px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .task-list::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .task-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .task-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 10px;
+        }
+
+        .task-item {
+            background: #f7fafc;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            animation: slideIn 0.3s ease;
+        }
+
+        .task-item:hover {
+            background: #edf2f7;
+            transform: translateX(5px);
+        }
+
+        .task-item.high-priority {
+            border-left-color: #f5576c;
+            background: #fff5f5;
+        }
+
+        .task-item.medium-priority {
+            border-left-color: #ed8936;
+            background: #fffaf0;
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            text-decoration: line-through;
+            border-left-color: #48bb78;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .task-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #2d3748;
+            flex: 1;
+        }
+
+        .task-creator {
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: 600;
+            background: #e6e9ff;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 10px;
+        }
+
+        .task-priority {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .priority-high {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .priority-medium {
+            background: #feebc8;
+            color: #c05621;
+        }
+
+        .priority-low {
+            background: #c6f6d5;
+            color: #22543d;
+        }
+
+        .task-description {
+            color: #718096;
+            margin-bottom: 10px;
+            line-height: 1.5;
+        }
+
+        .task-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #a0aec0;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #a0aec0;
+        }
+
+        .empty-state-icon {
+            font-size: 3em;
+            margin-bottom: 10px;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            z-index: 1000;
+            animation: slideInRight 0.3s ease;
+            display: none;
+        }
+
+        .notification.show {
+            display: block;
+        }
+
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .auth-modal.hidden {
+            display: none;
+        }
+
+        .auth-content {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            animation: zoomIn 0.3s ease;
+        }
+
+        .auth-content h2 {
+            color: #4a5568;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .auth-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #f7fafc;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes zoomIn {
+            from {
+                opacity: 0;
+                transform: scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .stats {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 登录/注册模态框 -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-content">
+            <h2>🔐 欢迎使用</h2>
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchTab('login')">登录</button>
+                <button class="auth-tab" onclick="switchTab('register')">注册</button>
+            </div>
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="loginEmail" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="loginPassword" placeholder="至少6位" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">登录</button>
+            </form>
+            <form id="registerForm" style="display: none;">
+                <div class="form-group">
+                    <label>用户名</label>
+                    <input type="text" id="registerName" placeholder="您的昵称" required>
+                </div>
+                <div class="form-group">
+                    <label>邮箱</label>
+                    <input type="email" id="registerEmail" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label>密码</label>
+                    <input type="password" id="registerPassword" placeholder="至少6位" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">注册</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="container" id="mainContent" style="display: none;">
+        <div class="header">
+            <h1>📋 重要事务管理系统</h1>
+            <p>高效管理您的关键任务，永不错过重要时刻</p>
+            <div class="user-info">
+                <span id="userName">👤 用户</span>
+                <button class="btn btn-secondary" onclick="logout()" style="padding: 5px 15px; font-size: 0.9em;">退出</button>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="card add-task-section">
+                <div class="card-header">
+                    <h2>✨ 添加新任务</h2>
+                </div>
+                <form id="taskForm">
+                    <div class="form-group">
+                        <label for="taskTitle">任务标题 *</label>
+                        <input type="text" id="taskTitle" placeholder="例如：完成项目报告" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="taskDescription">任务描述</label>
+                        <textarea id="taskDescription" placeholder="添加详细描述..."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="taskDateTime">截止时间 *</label>
+                            <input type="datetime-local" id="taskDateTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="taskPriority">优先级 *</label>
+                            <select id="taskPriority" required>
+                                <option value="high">🔴 高优先级</option>
+                                <option value="medium" selected>🟡 中优先级</option>
+                                <option value="low">🟢 低优先级</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary">➕ 添加任务</button>
+                </form>
+
+                <div class="stats">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalTasks">0</div>
+                        <div class="stat-label">总任务数</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="pendingTasks">0</div>
+                        <div class="stat-label">待完成</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completedTasks">0</div>
+                        <div class="stat-label">已完成</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>⏰ 待办任务</h2>
+                </div>
+                <div class="task-list" id="pendingTaskList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>✅ 已完成任务</h2>
+                </div>
+                <div class="task-list" id="completedTaskList">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>加载中...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getDatabase, ref, push, set, onValue, remove, update } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // ⚠️ 重要：这是演示配置，实际使用时需要替换为你自己的 Firebase 配置
+        const firebaseConfig = {
+    apiKey: "AIzaSyCpNJdxzVNGAfSOEcqgeLc97Tmi8FNnYxs",
+    authDomain: "task-manager-90990.firebaseapp.com",
+    databaseURL: "https://task-manager-90990-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "task-manager-90990",
+    storageBucket: "task-manager-90990.firebasestorage.app",
+    messagingSenderId: "910150616418",
+    appId: "1:910150616418:web:3f1e02e98dc73633a1983b"
+};
+
+        let app, auth, database, currentUser;
+
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            database = getDatabase(app);
+        } catch (error) {
+            console.error("Firebase 初始化失败:", error);
+            alert("⚠️ 数据库配置未完成！\n\n请按照以下步骤操作：\n1. 访问 https://console.firebase.google.com\n2. 创建新项目\n3. 启用 Email/Password 认证\n4. 创建 Realtime Database\n5. 将配置信息替换到代码中\n\n当前为演示模式，功能受限。");
+        }
+
+        // 切换登录/注册标签
+        window.switchTab = function(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            const tabs = document.querySelectorAll('.auth-tab');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            if (tab === 'login') {
+                loginForm.style.display = 'block';
+                registerForm.style.display = 'none';
+                tabs[0].classList.add('active');
+            } else {
+                loginForm.style.display = 'none';
+                registerForm.style.display = 'block';
+                tabs[1].classList.add('active');
+            }
+        };
+
+        // 注册
+        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const password = document.getElementById('registerPassword').value;
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(userCredential.user, { displayName: name });
+                showNotification('✅ 注册成功！', 'success');
+            } catch (error) {
+                showNotification('❌ ' + getErrorMessage(error.code), 'error');
+            }
+        });
+
+        // 登录
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                showNotification('✅ 登录成功！', 'success');
+            } catch (error) {
+                showNotification('❌ ' + getErrorMessage(error.code), 'error');
+            }
+        });
+
+        // 退出登录
+        window.logout = async function() {
+            if (confirm('确定要退出登录吗？')) {
+                try {
+                    await signOut(auth);
+                    showNotification('👋 已退出登录', 'info');
+                } catch (error) {
+                    showNotification('❌ 退出失败', 'error');
+                }
+            }
+        };
+
+        // 监听认证状态
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                document.getElementById('authModal').classList.add('hidden');
+                document.getElementById('mainContent').style.display = 'block';
+                document.getElementById('userName').textContent = '👤 ' + (user.displayName || user.email);
+                initTaskManager();
+            } else {
+                currentUser = null;
+                document.getElementById('authModal').classList.remove('hidden');
+                document.getElementById('mainContent').style.display = 'none';
+            }
+        });
+
+        // 任务管理器
+        let tasks = [];
+        let tasksRef;
+
+        function initTaskManager() {
+            tasksRef = ref(database, 'tasks/' + currentUser.uid);
+            
+            // 监听任务变化
+            onValue(tasksRef, (snapshot) => {
+                tasks = [];
+                snapshot.forEach((childSnapshot) => {
+                    tasks.push({
+                        id: childSnapshot.key,
+                        ...childSnapshot.val()
+                    });
+                });
+                renderTasks();
+            });
+
+            // 添加任务表单
+            document.getElementById('taskForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                await addTask();
+            });
+
+            // 定时检查提醒
+            setInterval(checkReminders, 60000);
+        }
+
+        async function addTask() {
+            const title = document.getElementById('taskTitle').value;
+            const description = document.getElementById('taskDescription').value;
+            const dateTime = document.getElementById('taskDateTime').value;
+            const priority = document.getElementById('taskPriority').value;
+
+            const task = {
+                title,
+                description,
+                dateTime: new Date(dateTime).toISOString(),
+                priority,
+                completed: false,
+                createdAt: new Date().toISOString(),
+                createdBy: currentUser.displayName || currentUser.email,
+                userId: currentUser.uid
+            };
+
+            try {
+                const newTaskRef = push(tasksRef);
+                await set(newTaskRef, task);
+                showNotification('✅ 任务添加成功！', 'success');
+                document.getElementById('taskForm').reset();
+            } catch (error) {
+                showNotification('❌ 添加失败: ' + error.message, 'error');
+            }
+        }
+
+        window.toggleComplete = async function(taskId) {
+            const task = tasks.find(t => t.id === taskId);
+            if (task) {
+                try {
+                    await update(ref(database, 'tasks/' + currentUser.uid + '/' + taskId), {
+                        completed: !task.completed
+                    });
+                    showNotification(task.completed ? '↩️ 任务已恢复' : '🎉 任务已完成！', 'success');
+                } catch (error) {
+                    showNotification('❌ 操作失败', 'error');
+                }
+            }
+        };
+
+        window.deleteTask = async function(taskId) {
+            if (confirm('确定要删除这个任务吗？')) {
+                try {
+                    await remove(ref(database, 'tasks/' + currentUser.uid + '/' + taskId));
+                    showNotification('🗑️ 任务已删除', 'info');
+                } catch (error) {
+                    showNotification('❌ 删除失败', 'error');
+                }
+            }
+        };
+
+        function renderTasks() {
+            const pending = tasks.filter(t => !t.completed).sort((a, b) => new Date(a.dateTime) - new Date(b.dateTime));
+            const completed = tasks.filter(t => t.completed).sort((a, b) => new Date(b.dateTime) - new Date(a.dateTime));
+
+            const pendingList = document.getElementById('pendingTaskList');
+            const completedList = document.getElementById('completedTaskList');
+
+            if (pending.length === 0) {
+                pendingList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📝</div>
+                        <p>暂无待办任务</p>
+                    </div>
+                `;
+            } else {
+                pendingList.innerHTML = pending.map(task => renderTask(task)).join('');
+            }
+
+            if (completed.length === 0) {
+                completedList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">🎉</div>
+                        <p>暂无已完成任务</p>
+                    </div>
+                `;
+            } else {
+                completedList.innerHTML = completed.map(task => renderTask(task)).join('');
+            }
+
+            // 更新统计
+            document.getElementById('totalTasks').textContent = tasks.length;
+            document.getElementById('pendingTasks').textContent = pending.length;
+            document.getElementById('completedTasks').textContent = completed.length;
+        }
+
+        function renderTask(task) {
+            const timeRemaining = getTimeRemaining(task.dateTime);
+            const isOverdue = timeRemaining === '已过期' && !task.completed;
+            const priorityText = {
+                high: '高优先级',
+                medium: '中优先级',
+                low: '低优先级'
+            };
+
+            return `
+                <div class="task-item ${task.priority}-priority ${task.completed ? 'completed' : ''}">
+                    <div class="task-header">
+                        <div class="task-title">${task.title}</div>
+                        <span class="task-creator">${task.createdBy}</span>
+                        <span class="task-priority priority-${task.priority}">
+                            ${priorityText[task.priority]}
+                        </span>
+                    </div>
+                    ${task.description ? `<div class="task-description">${task.description}</div>` : ''}
+                    <div class="task-meta">
+                        <span>⏰ ${formatDateTime(task.dateTime)}</span>
+                        <span style="${isOverdue ? 'color: #f5576c; font-weight: 600;' : ''}">
+                            ${timeRemaining}
+                        </span>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn btn-complete" onclick="toggleComplete('${task.id}')">
+                            ${task.completed ? '↩️ 恢复' : '✓ 完成'}
+                        </button>
+                        <button class="btn btn-danger" onclick="deleteTask('${task.id}')">
+                            🗑️ 删除
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatDateTime(dateString) {
+            const d = new Date(dateString);
+            const year = d.getFullYear();
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            const hours = String(d.getHours()).padStart(2, '0');
+            const minutes = String(d.getMinutes()).padStart(2, '0');
+            return `${year}-${month}-${day} ${hours}:${minutes}`;
+        }
+
+        function getTimeRemaining(dateString) {
+            const now = new Date();
+            const target = new Date(dateString);
+            const diff = target - now;
+
+            if (diff < 0) return '已过期';
+
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+            if (days > 0) return `剩余 ${days} 天 ${hours} 小时`;
+            if (hours > 0) return `剩余 ${hours} 小时 ${minutes} 分钟`;
+            return `剩余 ${minutes} 分钟`;
+        }
+
+        function checkReminders() {
+            if (!currentUser) return;
+
+            const now = new Date();
+            tasks.forEach(task => {
+                if (task.completed) return;
+
+                const taskTime = new Date(task.dateTime);
+                const diff = taskTime - now;
+
+                // 提前15分钟提醒
+                if (diff > 0 && diff <= 15 * 60 * 1000 && !task.reminded) {
+                    showNotification(`⏰ 提醒：${task.title} 将在15分钟后到期！`, 'warning');
+                    if ('Notification' in window && Notification.permission === 'granted') {
+                        new Notification('任务提醒', { body: `${task.title} 将在15分钟后到期！` });
+                    }
+                }
+            });
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification show';
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function getErrorMessage(code) {
+            const messages = {
+                'auth/email-already-in-use': '该邮箱已被注册',
+                'auth/invalid-email': '邮箱格式不正确',
+                'auth/weak-password': '密码强度太弱（至少6位）',
+                'auth/user-not-found': '用户不存在',
+                'auth/wrong-password': '密码错误',
+                'auth/too-many-requests': '操作过于频繁，请稍后再试'
+            };
+            return messages[code] || '操作失败，请重试';
+        }
+
+        // 请求通知权限
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+    </script>
+</body>
+</html>
